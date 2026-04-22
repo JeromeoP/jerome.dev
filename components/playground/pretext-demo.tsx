@@ -21,6 +21,7 @@ const FONT_SIZE_PX = 18;
 const LINE_HEIGHT_PX = 28;
 const MIN_WIDTH = 180;
 const DEFAULT_WIDTH = 420;
+const HANDLE_RESERVED_PX = 28;
 
 interface Readout {
   width: number;
@@ -55,9 +56,13 @@ export function PretextDemo() {
     if (!node) return;
     function measureMax() {
       if (!node) return;
-      const max = node.clientWidth;
+      const max = Math.max(MIN_WIDTH, node.clientWidth - HANDLE_RESERVED_PX);
       setContainerMaxWidth(max);
-      setWidth((prev) => Math.min(prev, max));
+      setWidth((prev) => {
+        if (prev > max) return max;
+        const initialMax = Math.max(MIN_WIDTH, max - 60);
+        return Math.min(prev, initialMax);
+      });
     }
     measureMax();
     const observer = new ResizeObserver(measureMax);
@@ -195,7 +200,8 @@ export function PretextDemo() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onKeyDown={onKeyDown}
-          className={`absolute -right-2 top-1/2 flex h-16 w-4 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border bg-bg-card transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+          style={{ touchAction: "none" }}
+          className={`absolute -right-4 top-1/2 flex h-20 w-8 -translate-y-1/2 cursor-ew-resize touch-none select-none items-center justify-center rounded-full border bg-bg-card transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
             isDragging
               ? "border-accent"
               : "border-border hover:border-accent-light"

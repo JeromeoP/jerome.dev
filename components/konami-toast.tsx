@@ -25,7 +25,7 @@ export function KonamiToast({ message, onDismiss }: KonamiToastProps) {
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-20 left-1/2 z-[300] -translate-x-1/2 whitespace-nowrap rounded-xl bg-[color:var(--text-primary)] px-6 py-3 text-sm font-medium text-white transition-all duration-[400ms] ease-out ${
+      className={`pointer-events-none fixed bottom-20 left-1/2 z-[300] -translate-x-1/2 whitespace-nowrap rounded-xl bg-[#1a1a2e] px-6 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-white/10 transition-all duration-[400ms] ease-out ${
         show ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
       }`}
     >
