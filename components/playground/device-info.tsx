@@ -206,29 +206,35 @@ export function DeviceInfo() {
     } catch {}
   }, [wakeLock]);
 
-  const rows = useMemo(
-    () => [
+  const rows = useMemo(() => {
+    const batterySupported = state.batteryLevel != null;
+    const connectionSupported = state.connection != null;
+    const downlinkSupported = state.downlink != null;
+
+    return [
       {
         label: "online",
         value: state.online ? "true" : "false",
-        good: state.online,
+        bad: !state.online,
       },
       {
         label: "battery",
-        value:
-          state.batteryLevel == null
-            ? "unavailable"
-            : `${Math.round(state.batteryLevel * 100)}%${
-                state.batteryCharging ? " ⚡" : ""
-              }`,
+        value: batterySupported
+          ? `${Math.round((state.batteryLevel ?? 0) * 100)}%${
+              state.batteryCharging ? " ⚡" : ""
+            }`
+          : "n/a in this browser",
+        unsupported: !batterySupported,
       },
       {
         label: "connection",
-        value: state.connection ?? "unknown",
+        value: connectionSupported ? (state.connection ?? "unknown") : "n/a in this browser",
+        unsupported: !connectionSupported,
       },
       {
         label: "downlink",
-        value: state.downlink != null ? `${state.downlink} Mb/s` : "—",
+        value: downlinkSupported ? `${state.downlink} Mb/s` : "n/a in this browser",
+        unsupported: !downlinkSupported,
       },
       {
         label: "pointer",
@@ -244,32 +250,42 @@ export function DeviceInfo() {
           ? `${state.gamepadName?.slice(0, 24) ?? "connected"} · ${state.gamepadButtonsPressed} pressed`
           : "plug one in",
       },
-    ],
-    [state],
-  );
+    ];
+  }, [state]);
 
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="overflow-hidden rounded-lg border border-border bg-bg-card">
         <table className="w-full border-collapse font-mono text-xs">
           <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={row.label}
-                className={i > 0 ? "border-t border-border" : ""}
-              >
-                <td className="px-3 py-2 uppercase tracking-[0.08em] text-text-muted">
-                  {row.label}
-                </td>
-                <td className="px-3 py-2 text-right text-text-primary">
-                  {"good" in row && row.good === false ? (
-                    <span className="text-rose-500">{row.value}</span>
-                  ) : (
-                    <span>{row.value}</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {rows.map((row, i) => {
+              const isUnsupported =
+                "unsupported" in row && row.unsupported === true;
+              const isBad = "bad" in row && row.bad === true;
+              return (
+                <tr
+                  key={row.label}
+                  className={i > 0 ? "border-t border-border" : ""}
+                >
+                  <td className="px-3 py-2 uppercase tracking-[0.08em] text-text-muted">
+                    {row.label}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span
+                      className={
+                        isBad
+                          ? "text-rose-500"
+                          : isUnsupported
+                            ? "italic text-text-muted"
+                            : "text-text-primary"
+                      }
+                    >
+                      {row.value}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
