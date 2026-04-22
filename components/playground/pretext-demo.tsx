@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -54,14 +55,19 @@ export function PretextDemo() {
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
+    let first = true;
     function measureMax() {
       if (!node) return;
       const max = Math.max(MIN_WIDTH, node.clientWidth - HANDLE_RESERVED_PX);
       setContainerMaxWidth(max);
       setWidth((prev) => {
         if (prev > max) return max;
-        const initialMax = Math.max(MIN_WIDTH, max - 60);
-        return Math.min(prev, initialMax);
+        if (first) {
+          first = false;
+          const initialMax = Math.max(MIN_WIDTH, max - 60);
+          return Math.min(prev, initialMax);
+        }
+        return prev;
       });
     }
     measureMax();
@@ -107,40 +113,73 @@ export function PretextDemo() {
     setLines(measuredLines.map((line) => line.text));
   }, [prepared, width]);
 
-  const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      dragStartRef.current = { startX: e.clientX, startWidth: width };
-      setIsDragging(true);
-    },
-    [width],
-  );
+  const handleRef = useRef<HTMLButtonElement | null>(null);
+  const containerMaxWidthRef = useRef(containerMaxWidth);
+  const readoutWidthRef = useRef(readout.width);
 
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>) => {
+  useLayoutEffect(() => {
+    containerMaxWidthRef.current = containerMaxWidth;
+  }, [containerMaxWidth]);
+
+  useLayoutEffect(() => {
+    readoutWidthRef.current = readout.width;
+  }, [readout.width]);
+
+  useEffect(() => {
+    const node = handleRef.current;
+    if (!node) return;
+
+    let activePointerId: number | null = null;
+
+    function clamp(value: number) {
+      return Math.min(
+        Math.max(MIN_WIDTH, value),
+        containerMaxWidthRef.current,
+      );
+    }
+
+    function onWindowPointerMove(e: PointerEvent) {
+      if (activePointerId === null || e.pointerId !== activePointerId) return;
+      e.preventDefault();
       const start = dragStartRef.current;
       if (!start) return;
-      const delta = e.clientX - start.startX;
-      const next = Math.min(
-        Math.max(MIN_WIDTH, start.startWidth + delta),
-        containerMaxWidth,
-      );
-      setWidth(next);
-    },
-    [containerMaxWidth],
-  );
+      setWidth(clamp(start.startWidth + (e.clientX - start.startX)));
+    }
 
-  const onPointerUp = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>) => {
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      }
+    function endDrag(e: PointerEvent) {
+      if (activePointerId === null || e.pointerId !== activePointerId) return;
+      activePointerId = null;
       dragStartRef.current = null;
       setIsDragging(false);
-    },
-    [],
-  );
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    }
+
+    function onPointerDown(e: PointerEvent) {
+      if (activePointerId !== null) return;
+      e.preventDefault();
+      activePointerId = e.pointerId;
+      dragStartRef.current = {
+        startX: e.clientX,
+        startWidth: readoutWidthRef.current,
+      };
+      setIsDragging(true);
+      window.addEventListener("pointermove", onWindowPointerMove, {
+        passive: false,
+      });
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+    }
+
+    node.addEventListener("pointerdown", onPointerDown, { passive: false });
+    return () => {
+      node.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    };
+  }, []);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -193,26 +232,27 @@ export function PretextDemo() {
             : null}
         </div>
         <button
+          ref={handleRef}
           type="button"
           aria-label="Resize handle. Drag, or use left/right arrow keys."
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
           onKeyDown={onKeyDown}
           style={{ touchAction: "none" }}
-          className={`absolute -right-4 top-1/2 flex h-20 w-8 -translate-y-1/2 cursor-ew-resize touch-none select-none items-center justify-center rounded-full border bg-bg-card transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+          className={`absolute -right-5 top-1/2 flex h-24 w-10 -translate-y-1/2 cursor-ew-resize touch-none select-none items-center justify-center rounded-full border bg-bg-card shadow-sm transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
             isDragging
-              ? "border-accent"
-              : "border-border hover:border-accent-light"
+              ? "border-accent scale-105"
+              : "border-accent-light/50 hover:border-accent-light"
           }`}
         >
           <span
             aria-hidden="true"
-            className={`block h-8 w-0.5 rounded-full transition-colors ${
-              isDragging ? "bg-accent" : "bg-text-muted"
+            className={`flex flex-col gap-0.5 transition-colors ${
+              isDragging ? "text-accent" : "text-text-muted"
             }`}
-          />
+          >
+            <span className="block h-0.5 w-2 rounded-full bg-current" />
+            <span className="block h-0.5 w-2 rounded-full bg-current" />
+            <span className="block h-0.5 w-2 rounded-full bg-current" />
+          </span>
         </button>
       </div>
 
