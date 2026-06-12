@@ -1,22 +1,24 @@
 import { About } from "@/components/about";
-import { Contact } from "@/components/contact";
+import { Capabilities } from "@/components/capabilities";
+import { ContactCta } from "@/components/contact-cta";
 import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
-import { Marquee } from "@/components/marquee";
+import { Manifesto } from "@/components/manifesto";
 import { Playground } from "@/components/playground";
 import { PortfolioShell } from "@/components/portfolio-shell";
-import { Projects } from "@/components/projects";
+import { WorkList } from "@/components/work-list";
 
 export default function Page() {
   return (
     <main>
       <PortfolioShell />
       <Hero />
-      <About />
-      <Marquee />
-      <Projects />
-      <Contact />
+      <Manifesto />
+      <WorkList />
+      <Capabilities />
       <Playground />
+      <About />
+      <ContactCta />
       <Footer />
     </main>
   );

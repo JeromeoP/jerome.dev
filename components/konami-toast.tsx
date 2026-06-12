@@ -25,10 +25,12 @@ export function KonamiToast({ message, onDismiss }: KonamiToastProps) {
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-20 left-1/2 z-[300] -translate-x-1/2 whitespace-nowrap rounded-xl bg-[#1a1a2e] px-6 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-white/10 transition-all duration-[400ms] ease-out ${
-        show ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
+      className={`pointer-events-none fixed bottom-16 left-1/2 z-[320] flex -translate-x-1/2 items-center gap-3 whitespace-nowrap border border-border bg-bg-card px-5 py-3 font-mono text-[11px] uppercase tracking-[0.14em] text-text-primary transition-all duration-[400ms] ease-out ${
+        show ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
       }`}
+      role="status"
     >
+      <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
       {message ?? ""}
     </div>
   );

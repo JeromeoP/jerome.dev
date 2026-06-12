@@ -1,100 +1,88 @@
 import type { ReactNode } from "react";
-import { Reveal } from "@/components/reveal";
-import { DeviceInfo } from "@/components/playground/device-info";
+import { Kicker } from "@/components/kicker";
+import { RevealGroup } from "@/components/reveal-group";
+import { Cloth } from "@/components/playground/cloth";
+import { ParticleType } from "@/components/playground/particle-type";
 import { PretextDemo } from "@/components/playground/pretext-demo";
-import { ViewTransitions } from "@/components/playground/view-transitions";
 
 interface TileProps {
+  index: string;
   tag: string;
   title: string;
   blurb: string;
-  delay?: 1 | 2 | 3 | 4;
   wide?: boolean;
   children: ReactNode;
 }
 
-function Tile({ tag, title, blurb, delay = 1, wide, children }: TileProps) {
+function Tile({ index, tag, title, blurb, wide, children }: TileProps) {
   return (
-    <Reveal
-      delay={delay}
-      className={`group flex h-full flex-col gap-6 rounded-card border border-border bg-bg-card p-8 max-md:p-6 ${
+    <div
+      data-reveal
+      className={`flex h-full flex-col gap-7 border-b border-r border-border p-8 transition-colors duration-300 hover:bg-bg-card max-md:p-5 ${
         wide ? "md:col-span-2" : ""
       }`}
     >
-      <header className="flex flex-col gap-2">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted">
-          {tag}
-        </span>
-        <h3 className="font-display text-xl font-semibold -tracking-[0.5px]">
+      <header className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.16em]">
+          <span className="text-accent">{index}</span>
+          <span className="text-text-muted">{tag}</span>
+        </div>
+        <h3 className="text-xl font-semibold tracking-[-0.01em] text-text-primary">
           {title}
         </h3>
-        <p className="text-sm leading-[1.6] text-text-secondary">{blurb}</p>
+        <p className="max-w-[560px] text-[13px] leading-[1.65] text-text-secondary">
+          {blurb}
+        </p>
       </header>
       <div className="flex-1">{children}</div>
-    </Reveal>
+    </div>
   );
 }
 
 export function Playground() {
   return (
-    <section
-      id="playground"
-      className="px-12 py-[120px] max-md:px-6 max-md:py-20"
-    >
-      <div className="mx-auto max-w-[1000px]">
-        <Reveal
-          as="div"
-          className="mb-3 text-center font-mono text-xs uppercase tracking-[0.1em] text-text-muted"
+    <section id="lab" className="px-8 py-[14vh] max-md:px-5 max-md:py-24">
+      <RevealGroup>
+        <Kicker index="04" label="Lab" note="(my own personal playground)" />
+        <h2
+          data-reveal
+          className="mb-14 max-w-[800px] text-[clamp(28px,3.6vw,52px)] font-medium leading-[1.05] tracking-[-0.015em] max-md:mb-9"
         >
-          <span>{"// playground"}</span>
-        </Reveal>
-        <Reveal
-          delay={1}
-          as="h2"
-          className="mb-4 text-center font-display text-4xl font-bold -tracking-[1px]"
-        >
-          <span>Cool things the web can do</span>
-        </Reveal>
-        <Reveal
-          delay={2}
-          as="p"
-          className="mx-auto mb-14 max-w-[560px] text-center text-base leading-[1.6] text-text-secondary"
-        >
-          <span>
-            My own personal playground.
-          </span>
-        </Reveal>
+          Cool things the web{" "}
+          <em className="wf-invert font-serif font-normal italic text-accent">can</em>{" "}
+          do
+        </h2>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 border-l border-t border-border md:grid-cols-2">
           <Tile
-            tag="// text layout"
+            index="Lab/01"
+            tag="Text layout"
             title="Measure text without the DOM"
             blurb="Drag to resize. Line count, height, and max-line-width recompute each frame — pure arithmetic, no reflow. Handles CJK, Arabic and emoji inline."
-            delay={1}
             wide
           >
             <PretextDemo />
           </Tile>
 
           <Tile
-            tag="// device info"
-            title="What the browser knows"
-            blurb="Battery, network, gamepad, wake lock, vibration — live from navigator. Plug in a controller, unplug your charger, watch it update."
-            delay={2}
+            index="Lab/02"
+            tag="Canvas 2D"
+            title="Type with a few thousand particles"
+            blurb="An offscreen canvas rasterizes whatever you type, then every particle races to claim a pixel. Your cursor scatters them. They always come home."
           >
-            <DeviceInfo />
+            <ParticleType />
           </Tile>
 
           <Tile
-            tag="// view transitions"
-            title="One-line page morphs"
-            blurb="startViewTransition() interpolates between any two DOM states. Click a tile — the browser figures out the animation."
-            delay={3}
+            index="Lab/03"
+            tag="Physics"
+            title="Cloth you can tear"
+            blurb="Verlet integration and a constraint solver written from scratch — no libraries. Drag it, yank it until it rips, hit reset when you feel bad."
           >
-            <ViewTransitions />
+            <Cloth />
           </Tile>
         </div>
-      </div>
+      </RevealGroup>
     </section>
   );
 }

@@ -36,6 +36,13 @@ export function PretextDemo() {
   const [containerMaxWidth, setContainerMaxWidth] = useState(DEFAULT_WIDTH);
   const [isDragging, setIsDragging] = useState(false);
   const [fontReady, setFontReady] = useState(false);
+  const [bodyFont, setBodyFont] = useState("system-ui, sans-serif");
+
+  useEffect(() => {
+    // Measure with the same font the page actually renders (next/font
+    // registers scoped family names, so a hardcoded name would miss it).
+    setBodyFont(getComputedStyle(document.body).fontFamily);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(
@@ -76,7 +83,7 @@ export function PretextDemo() {
     return () => observer.disconnect();
   }, []);
 
-  const fontShorthand = `${FONT_SIZE_PX}px Inter, system-ui, sans-serif`;
+  const fontShorthand = `${FONT_SIZE_PX}px ${bodyFont}`;
 
   const prepared = useMemo<PreparedTextWithSegments | null>(() => {
     if (!fontReady) return null;
@@ -210,7 +217,7 @@ export function PretextDemo() {
         <div
           className="relative"
           style={{
-            fontFamily: "Inter, system-ui, sans-serif",
+            fontFamily: bodyFont,
             fontSize: `${FONT_SIZE_PX}px`,
             lineHeight: `${LINE_HEIGHT_PX}px`,
             color: "var(--text-primary)",

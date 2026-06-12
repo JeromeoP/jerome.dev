@@ -83,43 +83,38 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center bg-black/30 pt-[20vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-start justify-center bg-black/70 pt-[18vh] backdrop-blur-md"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
       role="dialog"
       aria-modal="true"
+      aria-label="Command palette"
     >
       <div
-        className="animate-cmd-slide w-[520px] max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl border border-border bg-bg-card shadow-[0_24px_80px_rgba(0,0,0,0.12)]"
+        className="animate-cmd-slide w-[560px] max-w-[calc(100vw-32px)] overflow-hidden border border-border bg-bg-card shadow-[0_32px_120px_rgba(0,0,0,0.7)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="flex-shrink-0 text-text-muted"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <span aria-hidden="true" className="font-mono text-sm text-accent">
+            ❯
+          </span>
           <input
             ref={inputRef}
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Type a command or search..."
+            placeholder="TYPE A COMMAND…"
             autoComplete="off"
-            className="flex-1 border-0 bg-transparent font-sans text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+            className="flex-1 border-0 bg-transparent font-mono text-[13px] uppercase tracking-[0.08em] text-text-primary placeholder:text-text-muted focus:outline-none"
           />
+          <kbd className="border border-border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-text-muted">
+            Esc
+          </kbd>
         </div>
-        <div className="cmd-results max-h-[300px] overflow-y-auto p-2">
+        <div className="cmd-results max-h-[320px] overflow-y-auto py-1.5">
           {filtered.length === 0 && (
-            <div className="px-3 py-4 text-center text-sm text-text-muted">
+            <div className="px-5 py-5 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
               No commands found
             </div>
           )}
@@ -129,18 +124,27 @@ export function CommandPalette({
               type="button"
               onMouseEnter={() => setActiveIdx(i)}
               onClick={() => runCommand(i)}
-              className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-sm transition-colors ${
+              className={`flex w-full items-baseline justify-between gap-3 px-5 py-3 text-left font-mono text-[12px] uppercase tracking-[0.1em] transition-colors duration-100 ${
                 i === activeIdx
-                  ? "bg-[color:var(--accent-glow)] text-text-primary"
-                  : "text-text-secondary hover:bg-[color:var(--accent-glow)] hover:text-text-primary"
+                  ? "bg-accent text-bg"
+                  : "text-text-secondary"
               }`}
             >
-              <span className="inline-flex w-5 justify-center text-base">
-                {cmd.icon}
-              </span>
               <span>{cmd.label}</span>
+              <span
+                className={
+                  i === activeIdx ? "text-bg/70" : "text-text-muted"
+                }
+              >
+                {cmd.hint}
+              </span>
             </button>
           ))}
+        </div>
+        <div className="flex gap-5 border-t border-border px-5 py-2.5 font-mono text-[9px] uppercase tracking-[0.14em] text-text-muted">
+          <span>↑↓ Navigate</span>
+          <span>↵ Run</span>
+          <span>Esc Close</span>
         </div>
       </div>
     </div>

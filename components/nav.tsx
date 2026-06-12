@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { gsap } from "@/lib/gsap";
+import { prefersReducedMotion } from "@/lib/motion";
+import { onPreloaderDone } from "@/lib/preloader-state";
+import { scrollToTarget } from "@/lib/scroll";
+import { useStockholmTime } from "@/lib/use-stockholm-time";
 
 interface NavProps {
   onOpenPalette: () => void;
+  onToggleMenu: () => void;
+  isMenuOpen: boolean;
 }
 
-export function Nav({ onOpenPalette }: NavProps) {
+export function Nav({ onOpenPalette, onToggleMenu, isMenuOpen }: NavProps) {
+  const navRef = useRef<HTMLElement | null>(null);
   const [isHidden, setIsHidden] = useState(false);
   const [isMac, setIsMac] = useState(true);
+  const time = useStockholmTime();
 
   useEffect(() => {
     const platform =
@@ -22,59 +31,84 @@ export function Nav({ onOpenPalette }: NavProps) {
     let lastScroll = 0;
     function handleScroll() {
       const current = window.scrollY;
-      setIsHidden(current > lastScroll && current > 100);
+      setIsHidden(current > lastScroll && current > 120);
       lastScroll = current;
     }
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || prefersReducedMotion()) return;
+    gsap.set(nav, { autoAlpha: 0, y: -14 });
+    const unsubscribe = onPreloaderDone(() => {
+      gsap.to(nav, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        delay: 0.5,
+      });
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <nav
-      className={`fixed left-0 right-0 top-0 z-[100] flex items-center justify-between border-b border-black/[0.04] px-12 py-5 backdrop-blur-xl transition-transform duration-300 ease-out max-md:px-6 max-md:py-4 ${
-        isHidden ? "-translate-y-full" : "translate-y-0"
+      ref={navRef}
+      className={`fixed left-0 right-0 top-0 z-[260] flex items-center justify-between px-8 py-6 transition-transform duration-300 ease-out max-md:px-5 max-md:py-4 ${
+        isHidden && !isMenuOpen ? "-translate-y-full" : "translate-y-0"
       }`}
-      style={{ background: "color-mix(in srgb, var(--bg) 72%, transparent)" }}
     >
-      <div className="font-display text-xl font-bold -tracking-[0.5px]">
-        jerome<span className="text-accent">.</span>
-      </div>
-      <div className="flex items-center gap-8">
-        <ul className="flex list-none gap-8 max-md:hidden">
-          {[
-            { href: "#about", label: "About" },
-            { href: "#projects", label: "Projects" },
-            { href: "#contact", label: "Contact" },
-            { href: "#playground", label: "Playground" },
-          ].map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                className="group relative text-sm font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary"
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 h-[1.5px] w-0 bg-accent transition-[width] duration-300 group-hover:w-full" />
-              </a>
-            </li>
-          ))}
-        </ul>
+      <button
+        type="button"
+        onClick={() => scrollToTarget(0)}
+        className="font-expanded text-[15px] font-bold uppercase tracking-[-0.01em] text-text-primary"
+        aria-label="Back to top"
+      >
+        JP<span className="text-accent">©</span>
+        {String(new Date().getFullYear()).slice(-2)}
+      </button>
+
+      <div className="flex items-center gap-7">
+        <span
+          className="font-mono text-[10px] uppercase tracking-[0.16em] text-text-muted max-md:hidden"
+          suppressHydrationWarning
+        >
+          STO {time ?? "--:--"}
+        </span>
+
         <button
           type="button"
           onClick={onOpenPalette}
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 font-mono text-xs text-text-muted transition-all duration-200 hover:border-accent-light hover:text-accent max-md:hidden"
+          className="flex items-center gap-1.5 border border-border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-muted transition-colors duration-300 hover:border-text-muted hover:text-text-primary max-md:hidden"
           aria-label="Open command palette"
         >
-          <kbd
-            className={`rounded border border-border bg-bg-card font-mono text-[11px] ${
-              isMac ? "px-1.5 py-[1px]" : "px-1 py-[1px] text-[10px]"
-            }`}
-          >
-            {isMac ? "⌘" : "Ctrl"}
-          </kbd>
-          <kbd className="rounded border border-border bg-bg-card px-1.5 py-[1px] font-mono text-[11px]">
-            K
-          </kbd>
+          <kbd>{isMac ? "⌘" : "Ctrl"}</kbd>
+          <kbd>K</kbd>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleMenu}
+          aria-expanded={isMenuOpen}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          className="group flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-text-primary"
+        >
+          {isMenuOpen ? "Close" : "Menu"}
+          <span className="relative block h-[10px] w-6">
+            <span
+              className={`absolute left-0 top-0 block h-px w-full bg-current transition-transform duration-300 ${
+                isMenuOpen ? "translate-y-[4.5px] rotate-45" : "group-hover:-translate-y-[2px]"
+              }`}
+            />
+            <span
+              className={`absolute bottom-0 left-0 block h-px w-full bg-current transition-transform duration-300 ${
+                isMenuOpen ? "-translate-y-[4.5px] -rotate-45" : "group-hover:translate-y-[2px]"
+              }`}
+            />
+          </span>
         </button>
       </div>
     </nav>

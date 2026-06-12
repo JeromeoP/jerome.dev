@@ -1,84 +1,95 @@
 import { SOCIAL_LINKS } from "@/lib/portfolio-data";
+import { scrollToTarget } from "@/lib/scroll";
 
 export interface PaletteCommand {
   id: string;
   label: string;
-  icon: string;
-  shortcut?: string;
+  hint: string;
   run: (ctx: PaletteContext) => void;
 }
 
 export interface PaletteContext {
-  toggleDarkMode: () => void;
+  toggleWireframe: () => boolean;
   showToast: (message: string) => void;
-}
-
-function scrollToSelector(selector: string) {
-  document.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export const commands: PaletteCommand[] = [
   {
-    id: "go-about",
-    label: "Go to About",
-    icon: "☰",
-    run: () => scrollToSelector("#about"),
+    id: "go-work",
+    label: "Go to Work",
+    hint: "Nav",
+    run: () => scrollToTarget("#work"),
   },
   {
-    id: "go-projects",
-    label: "Go to Projects",
-    icon: "☰",
-    run: () => scrollToSelector("#projects"),
+    id: "go-stack",
+    label: "Go to Stack",
+    hint: "Nav",
+    run: () => scrollToTarget("#stack"),
+  },
+  {
+    id: "go-lab",
+    label: "Go to Lab",
+    hint: "Nav",
+    run: () => scrollToTarget("#lab"),
+  },
+  {
+    id: "go-about",
+    label: "Go to About",
+    hint: "Nav",
+    run: () => scrollToTarget("#about"),
   },
   {
     id: "go-contact",
     label: "Go to Contact",
-    icon: "☰",
-    run: () => scrollToSelector("#contact"),
+    hint: "Nav",
+    run: () => scrollToTarget("#contact"),
   },
   {
-    id: "go-playground",
-    label: "Go to Playground",
-    icon: "☰",
-    run: () => scrollToSelector("#playground"),
-  },
-  {
-    id: "email",
-    label: "Send Email",
-    icon: "✉",
-    run: () => {
-      window.location.href = `mailto:${SOCIAL_LINKS.email}`;
+    id: "copy-email",
+    label: "Copy Email",
+    hint: "Social",
+    run: (ctx) => {
+      navigator.clipboard
+        .writeText(SOCIAL_LINKS.email)
+        .then(() => ctx.showToast("Email copied to clipboard"))
+        .catch(() => {
+          window.location.href = `mailto:${SOCIAL_LINKS.email}`;
+        });
     },
   },
   {
     id: "github",
     label: "Open GitHub",
-    icon: "➜",
+    hint: "Social",
     run: () => window.open(SOCIAL_LINKS.github, "_blank"),
   },
   {
     id: "linkedin",
     label: "Open LinkedIn",
-    icon: "in",
+    hint: "Social",
     run: () => window.open(SOCIAL_LINKS.linkedin, "_blank"),
   },
   {
-    id: "dark-mode",
-    label: "Toggle Dark Mode",
-    icon: "☾",
-    run: (ctx) => ctx.toggleDarkMode(),
+    id: "wireframe",
+    label: "Toggle Wireframe Mode",
+    hint: "FX",
+    run: (ctx) => {
+      const enabled = ctx.toggleWireframe();
+      ctx.showToast(
+        enabled ? "Wireframe mode — a tribute to v1" : "Back to the smoke",
+      );
+    },
   },
   {
     id: "top",
     label: "Back to Top",
-    icon: "↑",
-    run: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    hint: "Nav",
+    run: () => scrollToTarget(0),
   },
   {
     id: "source",
     label: "View Source",
-    icon: "</>",
-    run: (ctx) =>
-      ctx.showToast("You're already looking at it :)"),
+    hint: "Misc",
+    run: (ctx) => ctx.showToast("You're already looking at it :)"),
   },
 ];

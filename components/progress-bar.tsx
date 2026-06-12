@@ -1,28 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function ProgressBar() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    function handleScroll() {
+    const bar = barRef.current;
+    if (!bar) return;
+
+    let rafId = 0;
+    function update() {
+      rafId = 0;
       const scrollTop = document.documentElement.scrollTop;
       const scrollHeight =
         document.documentElement.scrollHeight - window.innerHeight;
-      const next = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-      setProgress(next);
+      const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+      if (bar) bar.style.transform = `scaleX(${progress})`;
+    }
+    function onScroll() {
+      if (!rafId) rafId = requestAnimationFrame(update);
     }
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
     <div
-      className="fixed left-0 top-0 z-[101] h-[2px] bg-gradient-to-r from-accent to-[#8b5cf6] transition-[width] duration-100 ease-linear"
-      style={{ width: `${progress}%` }}
+      ref={barRef}
+      aria-hidden="true"
+      className="fixed left-0 top-0 z-[270] h-[2px] w-full origin-left bg-accent"
+      style={{ transform: "scaleX(0)" }}
     />
   );
 }

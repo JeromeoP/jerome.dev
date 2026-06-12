@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "@/components/command-palette";
-import { CursorTrail } from "@/components/cursor-trail";
+import { Cursor } from "@/components/cursor";
+import { Grain } from "@/components/grain";
 import { KonamiToast } from "@/components/konami-toast";
+import { MenuOverlay } from "@/components/menu-overlay";
 import { Nav } from "@/components/nav";
+import { Preloader } from "@/components/preloader";
 import { ProgressBar } from "@/components/progress-bar";
-import { TimeWidget } from "@/components/time-widget";
-import { useDarkMode } from "@/lib/use-dark-mode";
+import { SmoothScroll } from "@/components/smooth-scroll";
+import { scrollToTarget } from "@/lib/scroll";
+import { toggleWireframe } from "@/lib/wireframe";
 
 const KONAMI_CODE = [
   "ArrowUp",
@@ -24,22 +28,24 @@ const KONAMI_CODE = [
 
 export function PortfolioShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const { toggle: toggleDarkMode } = useDarkMode();
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
   }, []);
 
   const dismissToast = useCallback(() => setToastMessage(null), []);
-
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const toggleMenu = useCallback(() => setMenuOpen((open) => !open), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setMenuOpen(false);
         setPaletteOpen((open) => !open);
       }
     }
@@ -65,11 +71,11 @@ export function PortfolioShell() {
       if (keyMatches) {
         idx += 1;
         if (idx === KONAMI_CODE.length) {
-          const nowDark = toggleDarkMode();
+          const enabled = toggleWireframe();
           showToast(
-            nowDark
-              ? "You found it. Welcome to dark mode."
-              : "Back to the light.",
+            enabled
+              ? "Wireframe mode — a tribute to v1"
+              : "Back to the smoke",
           );
           idx = 0;
         }
@@ -79,7 +85,7 @@ export function PortfolioShell() {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [toggleDarkMode, showToast]);
+  }, [showToast]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -88,31 +94,37 @@ export function PortfolioShell() {
       if (!anchor) return;
       const href = anchor.getAttribute("href");
       if (!href || href === "#") return;
-      const section = document.querySelector(href);
-      if (!section) return;
+      if (!document.querySelector(href)) return;
       e.preventDefault();
-      section.scrollIntoView({ behavior: "smooth" });
+      scrollToTarget(href);
     }
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, []);
 
   const paletteContext = useMemo(
-    () => ({ toggleDarkMode, showToast }),
-    [toggleDarkMode, showToast],
+    () => ({ toggleWireframe: () => toggleWireframe(), showToast }),
+    [showToast],
   );
 
   return (
     <>
+      <SmoothScroll />
+      <Preloader />
+      <Grain />
+      <Cursor />
       <ProgressBar />
-      <CursorTrail />
-      <Nav onOpenPalette={openPalette} />
+      <Nav
+        onOpenPalette={openPalette}
+        onToggleMenu={toggleMenu}
+        isMenuOpen={menuOpen}
+      />
+      <MenuOverlay isOpen={menuOpen} onClose={closeMenu} />
       <CommandPalette
         isOpen={paletteOpen}
         onClose={closePalette}
         context={paletteContext}
       />
-      <TimeWidget />
       <KonamiToast message={toastMessage} onDismiss={dismissToast} />
     </>
   );
